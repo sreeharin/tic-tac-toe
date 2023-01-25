@@ -27,11 +27,9 @@ def convert(game_string: str) -> dict:
 
 def draw(game_string: str) -> bool:
     '''Check if game is draw'''
-    if (
-        not x_wins(game_string) 
-        and not o_wins(game_string)
-        and '-' not in game_string
-    ):
+    if (not x_wins(game_string) and \
+        not o_wins(game_string) and \
+        '-' not in game_string):
         return True
     return False
 
