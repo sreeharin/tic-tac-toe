@@ -5,12 +5,6 @@ Author: shn
 License: MIT License
 '''
 
-'''
-0 1 2
-3 4 5
-6 7 8
-'''
-
 def convert(game_string: str) -> dict:
     '''Convert game string into game map'''
     game_map = {
@@ -33,12 +27,24 @@ def convert(game_string: str) -> dict:
 
 def draw(game_string: str) -> bool:
     '''Check if game is draw'''
+    if (
+        not x_wins(game_string) 
+        and not o_wins(game_string)
+        and '-' not in game_string
+    ):
+        return True
     return False
 
 def x_wins(game_string: str) -> bool:
     '''Check if x won the game'''
+    game_map = convert(game_string)
+    if 3*'x' in game_map['h']+game_map['v']+game_map['d']:
+        return True
     return False
 
 def o_wins(game_string: str) -> bool:
     '''Check if o won the game'''
+    game_map = convert(game_string)
+    if 3*'o' in game_map['h']+game_map['v']+game_map['d']:
+        return True
     return False
