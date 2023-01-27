@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Tic Tac Toe - Multiplayer game{% endblock %}
+{% block script %}
+    <script type="text/javascript" src="{{url_for('static', filename='js/index.js')}}"></script>
+{% endblock%}
+
+{% block content %}
+    <div class="container text-center mt-5">
+        <h1 class="display-3" style="font-family: Righteous">Tic Tac Toe</h1>
+        <h1 class="display-6 opacity-75 mt-2" style="font-family: Raleway">
+            Play tic tac toe with your friends
+        </h2>
+
+        <div id="game-code-form" class="mt-4 container mx-auto" style="width: max-content;">
+                <input type="text" id="game-code" 
+                placeholder="Game code" style="font-family: Raleway; text-align: center;" 
+                class="border-dark rounded">
+            </form>
+       </div>
+
+        <div style="font-family: Poppins" class="hstack gap-5 mt-3 justify-content-center">
+            <button id="host" type="button" class="btn btn-outline-dark btn-lg">
+                Host
+            </button>
+            <button id="join" type="button" class="btn btn-outline-dark btn-lg">
+                Join
+            </button>
+       </div>
+    </div>
+{% endblock %}
