@@ -14,3 +14,7 @@ app.logger.info('Starting tic tac toe client')
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/host')
+def host():
+    return render_template('host.html')

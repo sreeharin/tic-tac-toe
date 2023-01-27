@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Tic Tac Toe - Multiplayer game{% endblock %}
+{% block title %}Multiplayer game{% endblock %}
 {% block script %}
     <script type="text/javascript" src="{{url_for('static', filename='js/index.js')}}"></script>
 {% endblock%}
@@ -20,9 +20,11 @@
        </div>
 
         <div id="btns" style="font-family: Poppins" class="hstack gap-5 mt-3 justify-content-center">
-            <button id="host" type="button" class="btn btn-outline-dark">
-                Host
-            </button>
+            <a href="{{url_for('host')}}">
+                <button id="host" type="button" class="btn btn-outline-dark">
+                    Host
+                </button>
+            </a>
             <button id="join" type="button" class="btn btn-outline-dark">
                 Join
             </button>
