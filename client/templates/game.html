@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %} Play! {% endblock %}
+{% block stylesheet %} 
+    <link rel="stylesheet" href="{{url_for('static', filename='css/game.css')}}">
+{% endblock %} 
+
+{% block content %} 
+    
+    <div class="game-board mx-auto mt-5">
+        <div id="tile_1" class="tile border border-dark">
+            <div class="xo-mark">X</div>
+        </div>
+        <div id="tile_2" class="tile border border-dark">
+            <div class="xo-mark">O</div>
+        </div>
+        <div id="tile_3" class="tile border border-dark"></div>
+        <div id="tile_4" class="tile border border-dark"></div>
+        <div id="tile_5" class="tile border border-dark"></div>
+        <div id="tile_6" class="tile border border-dark"></div>
+        <div id="tile_7" class="tile border border-dark"></div>
+        <div id="tile_8" class="tile border border-dark"></div>
+        <div id="tile_9" class="tile border border-dark"></div>
+    </div>
+
+{% endblock %}

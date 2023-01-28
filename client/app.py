@@ -18,3 +18,7 @@ def index():
 @app.route('/host')
 def host():
     return render_template('host.html')
+
+@app.route('/game')
+def game():
+    return render_template('game.html')
