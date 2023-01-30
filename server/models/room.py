@@ -4,10 +4,13 @@ License: MIT License
 '''
 
 class Room:
-    def __init__(self):
+    def __init__(
+            self, game_code: str = None, 
+            players: list = [], x: str = None, 
+            o: str = None, game_string: str = None):
         '''Room class'''
-        self.game_code = None
-        self.players = []
-        self.x = None
-        self.o = None
-        self.game_string = None
+        self.game_code = game_code 
+        self.players = players
+        self.x = x 
+        self.o = o
+        self.game_string = game_string 
