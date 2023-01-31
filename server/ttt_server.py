@@ -23,6 +23,11 @@ class TicTacToeProtocol(basic.LineReceiver):
             self.handle_line(json_data)
         except json.decoder.JSONDecodeError:
             self.write_response('invalid input')
+        except Exception as e:
+            logging.error(
+                f'Unknown error {e} occured while parsing: {line}'
+            )
+            self.write_response('unknown error occured')
 
     def handle_line(self, json_data):
         action = json_data.get('action', None)
@@ -30,7 +35,7 @@ class TicTacToeProtocol(basic.LineReceiver):
 
         if action == 'HOST':
             logging.info(
-                'New game room created by : %s' % self.transport.getPeer()
+                'New game room created by : %s' % self.transport.getPeer().host
             )
             gc = game_code()
             self.factory.game_rooms[gc] = Room(
@@ -39,6 +44,9 @@ class TicTacToeProtocol(basic.LineReceiver):
             self.write_response('room created') 
 
         elif action == 'JOIN':
+            logging.info(
+                'New player joining game room'
+            )
             if data == None:
                 self.write_response('invalid data')
                 return
@@ -48,7 +56,7 @@ class TicTacToeProtocol(basic.LineReceiver):
                 self.write_response('game_code not found')
                 return
 
-            if gc not in self.factory.game_rooms:
+            if not self.factory.valid_game_code(gc):
                 self.write_response('invalid game_code')
                 return
 
@@ -56,8 +64,28 @@ class TicTacToeProtocol(basic.LineReceiver):
                 self.transport.getPeer()
             )
             self.write_response('joined room')
+
         elif action == 'CANCEL':
-            pass
+            logging.info('Player cancelling game room')
+            gc = data.get('game_code', None) 
+            if not self.factory.valid_game_code(gc):
+                self.write_response('invalid game_code')
+                return
+
+            addr = self.transport.getPeer() 
+            if addr not in self.factory.game_rooms[gc].players:
+                self.write_response('not authorized to cancel game room')
+                return
+
+            try:
+                del self.factory.game_rooms[gc]
+                self.write_response('cancelled game room')
+                return
+            except Exception as e:
+                logging.error(
+                    f'Unknown error occured while trying to cancel game: {e}'
+                )
+                self.write_reponse('uknown error occured') 
         else:
             pass
 
@@ -70,6 +98,9 @@ class TicTacToeFactory(protocol.ServerFactory):
 
     def __init__(self):
         self.game_rooms = {} 
+
+    def valid_game_code(self, game_code: str) -> bool:
+        return True if game_code in self.game_rooms else False
 
 if __name__ == '__main__':
     logging.info('Starting Tic Tac Toe server')
