@@ -32,8 +32,18 @@ class TestServer(unittest.TestCase):
 
     def test_cancel_game_room_without_authorization(self):
         '''Trying to cancel a game room without being in it'''
-        raise Exception("Not implemented")
-    
+        host = {"action": "HOST", "data": None}
+        self.protocol.lineReceived(dumps(host).encode('utf-8'))
+        game_code = list(self.factory.game_rooms.keys())[0]
+        self.tr.clear()
+        self.assertEqual(len(self.factory.game_rooms), 1)
+        self.assertIn(game_code, self.factory.game_rooms)
+        self.factory.game_rooms[game_code].players = []
+        cancel = {"action": "CANCEL", "data": {"game_code": game_code}}
+        self.protocol.lineReceived(dumps(cancel).encode('utf-8'))
+        res = {"response": "not authorized to cancel game room"}
+        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
+
     #HAPPY PATHS
 
     def test_host_game(self):
