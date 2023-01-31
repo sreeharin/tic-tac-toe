@@ -1,3 +1,8 @@
+'''
+Author: shn
+License: MIT License
+'''
+
 from twisted.internet import protocol, reactor, endpoints
 from twisted.protocols import basic
 from twisted.application import service
@@ -5,6 +10,7 @@ import logging
 import json
 from tools.game_code import game_code
 from models.room import Room
+from game.ttt import eval_game
 
 logging.basicConfig(
     filename='ttt-server.log', encoding='utf-8', 
@@ -39,7 +45,7 @@ class TicTacToeProtocol(basic.LineReceiver):
             )
             gc = game_code()
             self.factory.game_rooms[gc] = Room(
-                game_code = gc, players = [self.transport.getPeer()]
+                game_code = gc, players = [self.transport]
             )
             self.write_response('room created') 
 
@@ -47,12 +53,12 @@ class TicTacToeProtocol(basic.LineReceiver):
             logging.info(
                 'New player joining game room'
             )
-            if data == None:
+            if not data:
                 self.write_response('invalid data')
                 return
 
             gc = data.get('game_code', None) 
-            if gc == None:
+            if not gc:
                 self.write_response('game_code not found')
                 return
 
@@ -60,9 +66,7 @@ class TicTacToeProtocol(basic.LineReceiver):
                 self.write_response('invalid game_code')
                 return
 
-            self.factory.game_rooms[gc].players.append(
-                self.transport.getPeer()
-            )
+            self.factory.game_rooms[gc].players.append(self.transport)
             self.write_response('joined room')
 
         elif action == 'CANCEL':
@@ -73,7 +77,7 @@ class TicTacToeProtocol(basic.LineReceiver):
                 return
 
             addr = self.transport.getPeer() 
-            if addr not in self.factory.game_rooms[gc].players:
+            if addr not in [player.getPeer() for player in self.factory.game_rooms[gc].players]:
                 self.write_response('not authorized to cancel game room')
                 return
 
@@ -85,11 +89,33 @@ class TicTacToeProtocol(basic.LineReceiver):
                 logging.error(
                     f'Unknown error occured while trying to cancel game: {e}'
                 )
-                self.write_reponse('uknown error occured') 
+                self.write_reponse('unknown error occured') 
+
+        elif action == 'EVAL':
+            game_string = data.get('game_string', None)
+            gc = data.get('game_code', None)
+            if not game_string:
+                self.write_response('game_string not found')
+                return
+            if not gc:
+                self.write_response('game_code not found')
+                return
+            if not self.factory.valid_game_code(gc):
+                self.write_response('invalid game_code')
+                return
+
+            for player in self.factory.game_rooms[gc].players:
+                res = {
+                    "response": eval_game(game_string)
+                }
+                player.write(json.dumps(res).encode('utf-8') + b'\r\n')
+
         else:
-            pass
+            logging.error(f'Unknown action: {action}')
+            self.write_response('unknown action')
 
     def write_response(self, msg: str) -> None:
+        '''Sends reponse back to other end'''
         res = {'response': msg}
         self.sendLine(json.dumps(res).encode('utf-8'))
 
@@ -100,6 +126,7 @@ class TicTacToeFactory(protocol.ServerFactory):
         self.game_rooms = {} 
 
     def valid_game_code(self, game_code: str) -> bool:
+        '''Checks if game code is valid or not'''
         return True if game_code in self.game_rooms else False
 
 if __name__ == '__main__':

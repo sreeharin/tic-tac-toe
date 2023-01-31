@@ -23,12 +23,32 @@ class TestServer(unittest.TestCase):
     def test_invalid_game_code(self):
         join = {"action": "JOIN", "data": {"game_code": "test"}}
         cancel = {"action": "CANCEL", "data": {"game_code": "test"}}
+        eval_game = {"action": "CANCEL", "data": {"game_code": "test"}}
         res = {"response": "invalid game_code"}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.tr.clear()
         self.protocol.lineReceived(dumps(cancel).encode('utf-8'))
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
+        self.tr.clear()
+        self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
+        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
+
+    def test_game_string_not_found(self):
+        host = {"action": "HOST", "data": None}
+        self.protocol.lineReceived(dumps(host).encode('utf-8'))
+        game_code = list(self.factory.game_rooms.keys())[0]
+        self.tr.clear()
+        eval_game = {
+            "action": "EVAL", 
+            "data": {
+                "game_code": game_code,
+            }
+        }
+        self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
+        res = {"response": "game_string not found"}
+        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
+
 
     def test_cancel_game_room_without_authorization(self):
         '''Trying to cancel a game room without being in it'''
@@ -76,9 +96,21 @@ class TestServer(unittest.TestCase):
         self.protocol.lineReceived(dumps(cancel).encode('utf-8'))
         res = {"response": "cancelled game room"}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
-        # self.assertEqual(len(self.factory.game_rooms), 0)
         self.assertNotIn(game_code, self.factory.game_rooms)
 
     def test_eval(self):
-        raise Exception("Not implemented")
+        host = {"action": "HOST", "data": None}
+        self.protocol.lineReceived(dumps(host).encode('utf-8'))
+        game_code = list(self.factory.game_rooms.keys())[0]
+        self.tr.clear()
+        eval_game = {
+            "action": "EVAL", 
+            "data": {
+                "game_code": game_code,
+                "game_string": "oxoxo-oxx"
+            }
+        }
+        self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
+        res = {"response": "o_won"}
+        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
