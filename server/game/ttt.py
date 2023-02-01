@@ -5,6 +5,14 @@ Author: shn
 License: MIT License
 '''
 
+from enum import StrEnum, auto
+
+class Result(StrEnum):
+    DRAW = auto()
+    X_WON = auto()
+    O_WON = auto()
+    ONGOING = auto()
+
 def convert(game_string: str) -> dict:
     '''Convert game string into game map'''
     game_map = {
@@ -46,3 +54,15 @@ def o_wins(game_string: str) -> bool:
     if 3*'o' in game_map['h']+game_map['v']+game_map['d']:
         return True
     return False
+
+def eval_game(game_string: str) -> Result:
+    '''Evaluates the status of the game'''
+    if draw(game_string):
+        return Result.DRAW
+    else:
+        if x_wins(game_string):
+            return Result.X_WON
+        elif o_wins(game_string):
+            return Result.O_WON
+        else:
+            return Result.ONGOING
