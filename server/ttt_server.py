@@ -3,11 +3,12 @@ Author: shn
 License: MIT License
 '''
 
+import logging
+import json
 from twisted.internet import protocol, reactor, endpoints
 from twisted.protocols import basic
 from twisted.application import service
-import logging
-import json
+from ipaddress import IPv4Address
 from tools.game_code import game_code
 from models.room import Room
 from game.ttt import eval_game
@@ -24,7 +25,17 @@ class TicTacToeProtocol(basic.LineReceiver):
 
     def connectionLost(self, reason):
         addr = self.transport.getPeer()
-        logging.info(f'Connection lost by {addr.host} due to {reason}')
+        logging.info(
+            f'Connection lost by {addr.host} [{reason.getErrorMessage()}]'
+        )
+    
+        gc = self.factory.find_game_code(addr) 
+        if gc:
+            try:
+                del self.factory.game_rooms[gc]
+                logging.info(f'Deleted room with game_code: {gc}')
+            except KeyError:
+                pass
 
     def lineReceived(self, line):
         try:
@@ -44,19 +55,17 @@ class TicTacToeProtocol(basic.LineReceiver):
         data = json_data.get('data', None)
 
         if action == 'HOST':
-            logging.info(
-                'New game room created by : %s' % self.transport.getPeer().host
-            )
             gc = game_code()
+            addr = self.transport.getPeer()
+            logging.info(
+                f'New game room created by {addr.host} with game_code: {gc}' 
+            )
             self.factory.game_rooms[gc] = Room(
                 game_code = gc, players = [self.transport]
             )
             self.write_response('room created') 
 
         elif action == 'JOIN':
-            logging.info(
-                'New player joining game room'
-            )
             if not data:
                 self.write_response('invalid data')
                 return
@@ -71,13 +80,13 @@ class TicTacToeProtocol(basic.LineReceiver):
                 return
             
             if len(self.factory.game_rooms[gc].players) < 2:
+                logging.info(f'New player joining game room: {gc}')
                 self.factory.game_rooms[gc].players.append(self.transport)
                 self.write_response('joined room')
             else:
                 self.write_response('room full')
 
         elif action == 'CANCEL':
-            logging.info('Player cancelling game room')
             gc = data.get('game_code', None) 
             if not self.factory.valid_game_code(gc):
                 self.write_response('invalid game_code')
@@ -89,6 +98,7 @@ class TicTacToeProtocol(basic.LineReceiver):
                 return
 
             try:
+                logging.info(f'Player cancelling game room: {gc}')
                 del self.factory.game_rooms[gc]
                 self.write_response('cancelled game room')
                 return
@@ -111,10 +121,9 @@ class TicTacToeProtocol(basic.LineReceiver):
                 self.write_response('invalid game_code')
                 return
 
+            logging.info('Player evaluating game string')
             for player in self.factory.game_rooms[gc].players:
-                res = {
-                    "response": eval_game(game_string)
-                }
+                res = {"response": eval_game(game_string)}
                 player.write(json.dumps(res).encode('utf-8') + b'\r\n')
 
         else:
@@ -135,6 +144,18 @@ class TicTacToeFactory(protocol.ServerFactory):
     def valid_game_code(self, game_code: str) -> bool:
         '''Checks if game code is valid or not'''
         return True if game_code in self.game_rooms else False
+
+    def find_game_code(self, addr: IPv4Address) -> str:
+        '''Returns game code from player's address''' 
+        game_rooms = [*self.game_rooms.values()]
+        tmp = list(filter(
+            lambda x: addr in [player.getPeer() for player in x.players], 
+            game_rooms
+        ))
+        try:
+            return tmp[0].game_code
+        except IndexError:
+            return None
 
 if __name__ == '__main__':
     logging.info('Starting Tic Tac Toe server')

@@ -14,11 +14,13 @@ class TestServer(unittest.TestCase):
         self.protocol.makeConnection(self.tr)
 
     def test_invalid_input(self):
+        '''Tests if the input is invalid or not'''
         self.protocol.lineReceived(b'test')
         res = {"response": "invalid input"}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_invalid_game_code(self):
+        '''Tests if given game code exists'''
         join = {"action": "JOIN", "data": {"game_code": "test"}}
         cancel = {"action": "CANCEL", "data": {"game_code": "test"}}
         eval_game = {"action": "CANCEL", "data": {"game_code": "test"}}
@@ -33,6 +35,7 @@ class TestServer(unittest.TestCase):
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_game_string_not_found(self):
+        '''Tests if game_string is in request'''
         host = {"action": "HOST", "data": None}
         self.protocol.lineReceived(dumps(host).encode('utf-8'))
         game_code = list(self.factory.game_rooms.keys())[0]
@@ -48,7 +51,7 @@ class TestServer(unittest.TestCase):
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_cancel_game_room_without_authorization(self):
-        '''Trying to cancel a game room without being in it'''
+        '''Tests if a game can be cancelled without being in the room'''
         host = {"action": "HOST", "data": None}
         self.protocol.lineReceived(dumps(host).encode('utf-8'))
         game_code = list(self.factory.game_rooms.keys())[0]
@@ -62,6 +65,7 @@ class TestServer(unittest.TestCase):
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_join_full_room(self):
+        '''Tests if a player can join an ongoing game with two players'''
         host = {"action": "HOST", "data": None}
         self.protocol.lineReceived(dumps(host).encode('utf-8'))
         game_code = list(self.factory.game_rooms.keys())[0]
@@ -77,6 +81,7 @@ class TestServer(unittest.TestCase):
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_host_game(self):
+        '''Tests game hosting'''
         tmp = {"action": "HOST", "data": None}
         res = {"response": "room created"}
         self.assertEqual(len(self.factory.game_rooms), 0)
@@ -85,6 +90,7 @@ class TestServer(unittest.TestCase):
         self.assertEqual(len(self.factory.game_rooms), 1)
 
     def test_join_game(self):
+        '''Tests game joining'''
         host = {"action": "HOST", "data": None}
         self.protocol.lineReceived(dumps(host).encode('utf-8'))
         game_code = list(self.factory.game_rooms.keys())[0]
@@ -96,6 +102,7 @@ class TestServer(unittest.TestCase):
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
 
     def test_cancel_game_room(self):
+        '''Tests game cancelling'''
         host = {"action": "HOST", "data": None}
         self.protocol.lineReceived(dumps(host).encode('utf-8'))
         game_code = list(self.factory.game_rooms.keys())[0]
@@ -109,6 +116,7 @@ class TestServer(unittest.TestCase):
         self.assertNotIn(game_code, self.factory.game_rooms)
 
     def test_eval(self):
+        '''Tests game string evaluation'''
         host = {"action": "HOST", "data": None}
         self.protocol.lineReceived(dumps(host).encode('utf-8'))
         game_code = list(self.factory.game_rooms.keys())[0]
@@ -123,4 +131,17 @@ class TestServer(unittest.TestCase):
         self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
         res = {"response": "o_won"}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
+
+    def test_find_game_code(self):
+        '''Test for finding game_code from address'''
+        tmp = {"action": "HOST", "data": None}
+        res = {"response": "room created"}
+        self.assertEqual(len(self.factory.game_rooms), 0)
+        self.protocol.lineReceived(dumps(tmp).encode('utf-8'))
+        game_code = list(self.factory.game_rooms.keys())[0]
+        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
+        self.assertEqual(len(self.factory.game_rooms), 1)
+        addr = self.tr.getPeer()
+        self.assertEqual(self.factory.find_game_code(addr), game_code)
+
 
