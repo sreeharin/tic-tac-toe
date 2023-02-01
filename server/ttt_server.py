@@ -18,9 +18,13 @@ logging.basicConfig(
 )
 
 class TicTacToeProtocol(basic.LineReceiver):
-    # def connectionMade(self):
-    #     addr = self.transport.getPeer()
-    #     logging.info('A new connection is established: %s' % (addr.host))
+    def connectionMade(self):
+        addr = self.transport.getPeer()
+        logging.info('A new connection is established: %s' % (addr.host))
+
+    def connectionLost(self, reason):
+        addr = self.transport.getPeer()
+        logging.info(f'Connection lost by {addr.host} due to {reason}')
 
     def lineReceived(self, line):
         try:
@@ -65,9 +69,12 @@ class TicTacToeProtocol(basic.LineReceiver):
             if not self.factory.valid_game_code(gc):
                 self.write_response('invalid game_code')
                 return
-
-            self.factory.game_rooms[gc].players.append(self.transport)
-            self.write_response('joined room')
+            
+            if len(self.factory.game_rooms[gc].players) < 2:
+                self.factory.game_rooms[gc].players.append(self.transport)
+                self.write_response('joined room')
+            else:
+                self.write_response('room full')
 
         elif action == 'CANCEL':
             logging.info('Player cancelling game room')

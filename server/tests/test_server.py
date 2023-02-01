@@ -13,8 +13,6 @@ class TestServer(unittest.TestCase):
         self.tr = proto_helpers.StringTransport()
         self.protocol.makeConnection(self.tr)
 
-    #SAD PATHS
-
     def test_invalid_input(self):
         self.protocol.lineReceived(b'test')
         res = {"response": "invalid input"}
@@ -49,7 +47,6 @@ class TestServer(unittest.TestCase):
         res = {"response": "game_string not found"}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
-
     def test_cancel_game_room_without_authorization(self):
         '''Trying to cancel a game room without being in it'''
         host = {"action": "HOST", "data": None}
@@ -64,7 +61,20 @@ class TestServer(unittest.TestCase):
         res = {"response": "not authorized to cancel game room"}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
-    #HAPPY PATHS
+    def test_join_full_room(self):
+        host = {"action": "HOST", "data": None}
+        self.protocol.lineReceived(dumps(host).encode('utf-8'))
+        game_code = list(self.factory.game_rooms.keys())[0]
+        self.tr.clear()
+        join = {"action": "JOIN", "data": {"game_code": game_code}}
+        self.protocol.lineReceived(dumps(join).encode('utf-8'))
+        res = {"response": "joined room"}
+        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
+        self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
+        self.tr.clear()
+        self.protocol.lineReceived(dumps(join).encode('utf-8'))
+        res = {"response": "room full"}
+        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_host_game(self):
         tmp = {"action": "HOST", "data": None}
