@@ -12,22 +12,21 @@ jobs:
     name: Server CI 
     runs-on: ubuntu-latest
     container: python:3-slim
+    defaults:
+      run:
+        working-directory: server
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Install dependencies
-        run:
-          working-directory: server
         run: |
           python -m pip install --upgrade pip wheel
           pip install -r requirements.txt
 
       - name: Run tests
-        run:
-          working-directory: server/tests
         run: |
-          python -m unittest test_game
-          python -m twisted.trial test_server 
+          python -m unittest tests/test_game
+          python -m twisted.trial tests/test_server 
 
