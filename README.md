@@ -1,6 +1,7 @@
 # Tic Tac Toe with a twist
-Tic Tac Toe server written in Twisted. Client will be provided soon 🤞
+![Build Status](https://github.com/sreeharin/tic-tac-toe/actions/workflows/ci.yml/badge.svg)
 
+Tic Tac Toe server written in Twisted. Client will be provided soon 🤞
 
 ## What makes this different?
 - Host a game room
