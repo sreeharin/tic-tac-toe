@@ -19,12 +19,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd server
           python -m pip install --upgrade pip wheel
-          pip install -r requirements.txt
+          pip install -r server/requirements.txt
 
       - name: Run tests
-        run: |
-          cd tests
-          ./run_tests.sh
+        run:|
+          python -m unittest server/tests/test_game
+          python -m twisted.trial server/tests/test_server 
 
