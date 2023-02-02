@@ -1,4 +1,4 @@
-name: Tic Tac Toe CI
+name: CI
 on:
   push:
     branches:
