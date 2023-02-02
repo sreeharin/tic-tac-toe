@@ -27,6 +27,6 @@ jobs:
 
       - name: Run tests
         run: |
-          python -m unittest tests/test_game
-          python -m twisted.trial tests/test_server 
+          python -m unittest tests/test_game.py
+          python -m twisted.trial tests/test_server.py 
 
