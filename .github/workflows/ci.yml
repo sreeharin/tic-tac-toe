@@ -18,12 +18,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install dependencies
+        working-directory: server
         run: |
           python -m pip install --upgrade pip wheel
-          pip install -r server/requirements.txt
+          pip install -r requirements.txt
 
       - name: Run tests
+        working-directory: server/tests
         run: |
-          python -m unittest server/tests/test_game
-          python -m twisted.trial server/tests/test_server 
+          python -m unittest test_game
+          python -m twisted.trial test_server 
 
