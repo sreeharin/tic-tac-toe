@@ -8,24 +8,23 @@ on:
       - main
 
 jobs:
-  server_job:
-    name: Server CI job
+  server_ci:
+    name: Server CI 
+    runs-on: ubuntu-latest
+    container: python:3-slim
 
-    build:
-      runs-on: ubuntu-latest
-      container: python:3-slim
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          cd server
+          python -m pip install --upgrade pip wheel
+          pip install -r requirements.txt
 
-        - name: Install dependencies
-          run: |
-            cd server
-            python -m pip install --upgrade pip wheel
-            pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          cd tests
+          ./run_tests.sh
 
-        - name: Run tests 
-          run: |
-            cd tests
-            ./run_tests.sh
