@@ -8,21 +8,24 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    container: python:3-slim
+  server_job:
+    name: Server CI job
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    build:
+      runs-on: ubuntu-latest
+      container: python:3-slim
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip wheel
-          pip install -r requirements.txt
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
 
-      - name: Linting with pylint
-        run: pylint game
+        - name: Install dependencies
+          run: |
+            cd server
+            python -m pip install --upgrade pip wheel
+            pip install -r requirements.txt
 
-      - name: Unit testing with PyUnit
-        run: python -m unittest tests/test* -v
+        - name: Run tests 
+          run: |
+            cd tests
+            ./run_tests.sh
