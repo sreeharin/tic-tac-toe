@@ -1,9 +1,7 @@
 import sys
 from tkinter import Frame, Entry, Button, Label
+from .switch_window import switch_window
 
-sys.path.append('../')
-# from actions import join_window_actions as actions
-import actions.switch_frame as sf
 
 class JoinWindow(Frame):
     def __init__(self, master=None):
@@ -19,7 +17,7 @@ class JoinWindow(Frame):
         btn1 = Button(self, text = "Enter room")
         btn2 = Button(
             self, text = "Go back", 
-            command = lambda: sf.switch_frame(self, 'MainWindow') 
+            command = lambda: switch_window(self, 'MainWindow') 
         )
 
         label1.grid(row=0, column=0, pady=5, columnspan=2)

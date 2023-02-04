@@ -1,6 +1,5 @@
 from tkinter import Tk
-from frames.main_window import MainWindow
-# from frames.join_window import JoinWindow
+from windows.main_window import MainWindow
 
 if __name__ == '__main__':
     root = Tk()
