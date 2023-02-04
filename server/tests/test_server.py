@@ -23,7 +23,13 @@ class TestServer(unittest.TestCase):
         '''Tests if given game code exists'''
         join = {"action": "JOIN", "data": {"game_code": "test"}}
         cancel = {"action": "CANCEL", "data": {"game_code": "test"}}
-        eval_game = {"action": "CANCEL", "data": {"game_code": "test"}}
+        eval_game = {
+            "action": "EVAL", 
+            "data": {
+                "game_code": "test",
+                "game_string": "test"
+                }
+            }
         res = {"response": "invalid game_code"}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
