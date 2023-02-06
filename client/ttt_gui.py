@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+'''
+Author: shn
+License: MIT License
+'''
+
 import sys
 import json
 from tkinter import Tk, Frame, Label, Button
@@ -18,7 +23,6 @@ class TicTacToeClientProtocol(LineReceiver):
     def lineReceived(self, line):
         print(line)
 
-
 class TicTacToeClientFactory(ClientFactory):
     protocol = TicTacToeClientProtocol
 
@@ -30,25 +34,44 @@ class TicTacToeClientFactory(ClientFactory):
             "action": "HOST",
             "data": None,
         }
-        self.client.sendLine(json.dumps(host_data).encode('utf-8'))
-        print('host game command send')
+        if self.client != None:
+            self.client.sendLine(json.dumps(host_data).encode('utf-8'))
+            print('host game command send')
+        else:
+            print('Not connected to server')
 
 class MainWindow(Frame):
+    '''First window which is shown when the GUI is run'''
     def __init__(self, master, factory):
         super().__init__(master)
         self.pack()
         self.__create_widgets()
 
     def __create_widgets(self):
-        label1 = Label(self, text="Tic Tac Toe")
-        label2 = Label(self, text="Play tic tac toe with your friends")
-        btn1 = Button(
-            self, text="Host", command=lambda: factory.host_game()
+        labelFrame = Frame(self)
+        label1 = Label(
+            labelFrame, text="Tic Tac Toe", 
+            pady=5, font=(20),
+        )
+        label2 = Label(
+            labelFrame, text="Play tic tac toe with your friends",
+            padx=10
         )
 
-        label1.pack()
-        label2.pack()
-        btn1.pack()
+        btnFrame = Frame(self)
+        btn1 = Button(
+            btnFrame, text="Host", 
+            command=lambda: factory.host_game()
+        )
+        btn2 = Button(btnFrame, text="Join")
+
+        labelFrame.grid(row=0, column=0)
+        label1.grid(row=0, column=0)
+        label2.grid(row=1, column=0)
+
+        btnFrame.grid(row=1, column=0)
+        btn1.grid(row=0, column=0, padx=5, pady=10)
+        btn2.grid(row=0, column=1, padx=5, pady=10)
 
 if __name__ == '__main__':
     try:
