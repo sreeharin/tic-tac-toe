@@ -63,7 +63,12 @@ class TicTacToeProtocol(basic.LineReceiver):
             self.factory.game_rooms[gc] = Room(
                 game_code = gc, players = [self.transport]
             )
-            self.write_response('room created') 
+            res = {
+                "response": "room created",
+                "game_code": gc,
+            }
+            self.sendLine(json.dumps(res).encode('utf-8'))
+            # self.write_response('room created') 
 
         elif action == 'JOIN':
             if not data:

@@ -23,7 +23,10 @@ class MainWindow(Frame):
         btnsFrame = Frame(self, width = 350, height = 100)
         btnsFrame.grid(row=1, column=0)
 
-        btn1 = Button(btnsFrame, text = "Host")
+        btn1 = Button(
+            btnsFrame, text = "Host",
+            command = lambda: 
+        )
         btn2 = Button(
             btnsFrame, text = "Join", 
             command = lambda: switch_window(self, 'JoinWindow')

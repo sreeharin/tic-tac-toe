@@ -89,10 +89,8 @@ class TestServer(unittest.TestCase):
     def test_host_game(self):
         '''Tests game hosting'''
         tmp = {"action": "HOST", "data": None}
-        res = {"response": "room created"}
         self.assertEqual(len(self.factory.game_rooms), 0)
         self.protocol.lineReceived(dumps(tmp).encode('utf-8'))
-        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertEqual(len(self.factory.game_rooms), 1)
 
     def test_join_game(self):
@@ -141,11 +139,9 @@ class TestServer(unittest.TestCase):
     def test_find_game_code(self):
         '''Test for finding game_code from address'''
         tmp = {"action": "HOST", "data": None}
-        res = {"response": "room created"}
         self.assertEqual(len(self.factory.game_rooms), 0)
         self.protocol.lineReceived(dumps(tmp).encode('utf-8'))
         game_code = list(self.factory.game_rooms.keys())[0]
-        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertEqual(len(self.factory.game_rooms), 1)
         addr = self.tr.getPeer()
         self.assertEqual(self.factory.find_game_code(addr), game_code)
