@@ -7,15 +7,19 @@ License: MIT License
 
 import sys
 import json
-from tkinter import Tk, Frame, Label, Button, Entry
+from tkinter import Tk, Frame, Label, Button, Entry, StringVar
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ClientFactory
 from twisted.internet import reactor, tksupport
+from twisted.python import log
 
 sys.path.append('../')
 from server.response import Response
 
+log.startLogging(sys.stdout)
 CURRENT_FRAME = None
+BTNS_STATE = None
+tmp = None
 
 class TicTacToeClientProtocol(LineReceiver):
     def connectionMade(self):
@@ -105,6 +109,14 @@ class TicTacToeClientFactory(ClientFactory):
             self.client.sendLine(json.dumps(cancel_data).encode('utf-8'))
         else:
             print('Can\'t cancel game room. Not connected to server')
+
+    def eval_btn_click(self, btn_no: int) -> None:
+        print(f"Clicked btn: {btn_no}")
+        if BTNS_STATE[btn_no].get() == "":
+            BTNS_STATE[btn_no].set("X")
+            game_string = ''.join(btn.get() \
+                    if btn.get() != "" else "-" for btn in BTNS_STATE)
+            print(game_string)
 
 def switch_frame(current_frame: any, new_frame: str, 
                  game_code: str = None) -> None:
@@ -240,6 +252,42 @@ class WaitingFrame(Frame):
         frame2.grid(row=1, column=0)
         btn1.grid(row=0, column=0, pady=10)
 
+class GameFrame(Frame):
+    def __init__(self, master, factory):
+        self.master = master
+        self.factory = factory
+        super().__init__(self.master)
+        self.pack()
+        self.__create_widgets()
+
+    def __create_widgets(self):
+        global BTNS_STATE
+        frame1 = Frame(self)
+        label1 = Label(frame1, text="You're playing with your friend")
+
+        frame1.grid(row=0, column=0)
+        label1.grid(row=0, column=0, padx=10, pady=5)
+
+        frame2 = Frame(self, bg="black")
+        frame2.grid(row=1, column=0, pady=10)
+
+        btns = [
+                Button(frame2, height=2, width=3, 
+                       textvariable=BTNS_STATE[no],
+                       command=lambda idx=no: self.factory.eval_btn_click(idx),
+                       ) for no in range(9)
+                ]
+        
+        row = 0
+        col = 0
+        for idx, btn in enumerate(btns):
+            if (idx)%3 == 0:
+                row += 1
+                col = 0
+            
+            btn.grid(row=row, column=col, padx=1, pady=1)
+            col += 1
+
 if __name__ == '__main__':
     try:
         assert len(sys.argv) >= 3
@@ -256,7 +304,9 @@ if __name__ == '__main__':
     root.protocol("WM_DELETE_WINDOW", lambda: reactor.stop())
 
     tksupport.install(root)
-    CURRENT_FRAME = MainFrame(root, factory)
+    # CURRENT_FRAME = MainFrame(root, factory)
+    BTNS_STATE = [StringVar() for _ in range(9)]
+    CURRENT_FRAME = GameFrame(root, factory)
     reactor.connectTCP(host, port, factory)
     reactor.run()
 
