@@ -19,7 +19,7 @@ from server.response import Response
 log.startLogging(sys.stdout)
 CURRENT_FRAME = None
 BTNS_STATE = None
-tmp = None
+
 
 class TicTacToeClientProtocol(LineReceiver):
     def connectionMade(self):
@@ -33,6 +33,7 @@ class TicTacToeClientProtocol(LineReceiver):
         line = line.decode('utf-8')
         self.factory.handle_line(line)
 
+
 class TicTacToeClientFactory(ClientFactory):
     protocol = TicTacToeClientProtocol
 
@@ -41,7 +42,7 @@ class TicTacToeClientFactory(ClientFactory):
 
     def handle_line(self, line: str) -> None:
         '''Reads response from line and does appropriate task'''
-        json_data = json.loads(line) 
+        json_data = json.loads(line)
         response = json_data.get('RES')
 
         match response:
@@ -79,7 +80,7 @@ class TicTacToeClientFactory(ClientFactory):
                 "action": "HOST",
                 "data": None,
                 }
-        if self.client != None:
+        if self.client is not None:
             self.client.sendLine(json.dumps(host_data).encode('utf-8'))
         else:
             print('Can\'t host game. Not connected to server.')
@@ -92,7 +93,7 @@ class TicTacToeClientFactory(ClientFactory):
                     "game_code": game_code
                     }
                 }
-        if self.client != None:
+        if self.client is not None:
             self.client.sendLine(json.dumps(join_data).encode('utf-8'))
         else:
             print('Can\'t join game room. Not connected to server.')
@@ -105,7 +106,7 @@ class TicTacToeClientFactory(ClientFactory):
                     "game_code": game_code,
                     }
                 }
-        if self.client != None:
+        if self.client is not None:
             self.client.sendLine(json.dumps(cancel_data).encode('utf-8'))
         else:
             print('Can\'t cancel game room. Not connected to server')
@@ -114,11 +115,13 @@ class TicTacToeClientFactory(ClientFactory):
         print(f"Clicked btn: {btn_no}")
         if BTNS_STATE[btn_no].get() == "":
             BTNS_STATE[btn_no].set("X")
-            game_string = ''.join(btn.get() \
+            game_string = ''.join(
+                    btn.get()
                     if btn.get() != "" else "-" for btn in BTNS_STATE)
             print(game_string)
 
-def switch_frame(current_frame: any, new_frame: str, 
+
+def switch_frame(current_frame: any, new_frame: str,
                  game_code: str = None) -> None:
     '''Switches between frames'''
     global CURRENT_FRAME
@@ -132,7 +135,7 @@ def switch_frame(current_frame: any, new_frame: str,
             tmpFrame.pack()
             CURRENT_FRAME = tmpFrame
         case 'WaitingFrame':
-            tmpFrame = WaitingFrame(current_frame.master, 
+            tmpFrame = WaitingFrame(current_frame.master,
                                     current_frame.factory, game_code)
             tmpFrame.pack()
             CURRENT_FRAME = tmpFrame
@@ -140,6 +143,7 @@ def switch_frame(current_frame: any, new_frame: str,
             print('Unknown frame')
             reactor.stop()
     current_frame.destroy()
+
 
 class MainFrame(Frame):
     '''First frame which is shown when the GUI is run'''
@@ -153,7 +157,7 @@ class MainFrame(Frame):
     def __create_widgets(self):
         labelFrame = Frame(self)
         label1 = Label(
-                labelFrame, text="Tic Tac Toe", 
+                labelFrame, text="Tic Tac Toe",
                 pady=5, font=(20),
                 )
         label2 = Label(
@@ -163,11 +167,11 @@ class MainFrame(Frame):
 
         btnFrame = Frame(self)
         btn1 = Button(
-                btnFrame, text="Host", 
+                btnFrame, text="Host",
                 command=lambda: self.factory.host_game()
                 )
         btn2 = Button(
-                btnFrame, text="Join", 
+                btnFrame, text="Join",
                 command=lambda: switch_frame(self, 'JoinFrame')
                 )
 
@@ -178,6 +182,7 @@ class MainFrame(Frame):
         btnFrame.grid(row=1, column=0)
         btn1.grid(row=0, column=0, padx=5, pady=10)
         btn2.grid(row=0, column=1, padx=5, pady=10)
+
 
 class JoinFrame(Frame):
     '''Frame for joining game using game code'''
@@ -191,7 +196,7 @@ class JoinFrame(Frame):
     def __create_widgets(self):
         frame1 = Frame(self)
         label1 = Label(
-                frame1, text="Join game room", 
+                frame1, text="Join game room",
                 pady=5, font=(20)
                 )
         label2 = Label(
@@ -217,6 +222,7 @@ class JoinFrame(Frame):
         frame2.grid(row=1, column=0)
         btn1.grid(row=0, column=0, padx=5, pady=10)
         btn2.grid(row=0, column=1, padx=5, pady=10)
+
 
 class WaitingFrame(Frame):
     def __init__(self, master, factory, game_code):
@@ -244,13 +250,13 @@ class WaitingFrame(Frame):
         label3.grid(row=3, column=0)
 
         frame2 = Frame(self)
-        btn1 = Button(frame2, text="Cancel game room", 
+        btn1 = Button(frame2, text="Cancel game room",
                       command=lambda: self.factory.cancel_game_room(
                           self.game_code)
                       )
-        
         frame2.grid(row=1, column=0)
         btn1.grid(row=0, column=0, pady=10)
+
 
 class GameFrame(Frame):
     def __init__(self, master, factory):
@@ -272,21 +278,20 @@ class GameFrame(Frame):
         frame2.grid(row=1, column=0, pady=10)
 
         btns = [
-                Button(frame2, height=2, width=3, 
+                Button(frame2, height=2, width=3,
                        textvariable=BTNS_STATE[no],
                        command=lambda idx=no: self.factory.eval_btn_click(idx),
                        ) for no in range(9)
                 ]
-        
         row = 0
         col = 0
         for idx, btn in enumerate(btns):
-            if (idx)%3 == 0:
+            if (idx) % 3 == 0:
                 row += 1
                 col = 0
-            
             btn.grid(row=row, column=col, padx=1, pady=1)
             col += 1
+
 
 if __name__ == '__main__':
     try:
@@ -309,4 +314,3 @@ if __name__ == '__main__':
     CURRENT_FRAME = GameFrame(root, factory)
     reactor.connectTCP(host, port, factory)
     reactor.run()
-
