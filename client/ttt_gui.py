@@ -12,6 +12,9 @@ from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ClientFactory
 from twisted.internet import reactor, tksupport
 
+sys.path.append('../')
+from server.response import Response
+
 CURRENT_FRAME = None
 
 class TicTacToeClientProtocol(LineReceiver):
@@ -23,6 +26,7 @@ class TicTacToeClientProtocol(LineReceiver):
         pass
 
     def lineReceived(self, line):
+        print(line)
         line = line.decode('utf-8')
         self.factory.handle_line(line)
 
@@ -34,14 +38,19 @@ class TicTacToeClientFactory(ClientFactory):
 
     def handle_line(self, line: str) -> None:
         json_data = json.loads(line) 
-        response = json_data.get('response')
+        response = json_data.get('RES')
 
         match response:
-            case 'room created':
-                game_code = json_data.get('game_code')
+            case Response.ROOM_CREATED:
+                print(json_data)
+                game_code = json_data.get('GAME_CODE')
                 switch_frame(CURRENT_FRAME, 'WaitingFrame', game_code)
+            case Response.CANCELLED_ROOM:
+                print('Room cancelled')
+                switch_frame(CURRENT_FRAME, 'MainFrame')
             case _:
-                print('Hmm')
+                print(response)
+                print('Unknown response')
 
     def host_game(self) -> None:
         print('Hosting game')
@@ -67,6 +76,19 @@ class TicTacToeClientFactory(ClientFactory):
             self.client.sendLine(json.dumps(join_data).encode('utf-8'))
         else:
             print('Can\'t join game room. Not connected to server.')
+
+    def cancel_game_room(self, game_code: str) -> None:
+        print(f'Cancelling game room with code: {game_code}')
+        cancel_data = {
+                "action": "CANCEL",
+                "data": {
+                    "game_code": game_code,
+                    }
+                }
+        if self.client != None:
+            self.client.sendLine(json.dumps(cancel_data).encode('utf-8'))
+        else:
+            print('Can\'t cancel game room. Not connected to server')
 
 def switch_frame(current_frame: any, new_frame: str, 
                  game_code: str = None) -> None:
@@ -180,12 +202,28 @@ class WaitingFrame(Frame):
 
     def __create_widgets(self):
         frame1 = Frame(self)
+        label0 = Label(frame1, text="Game hosted", font=(24))
         label1 = Label(frame1, text=f"Your game code is {self.game_code}")
-        label2 = Label(frame1, text="Share with your friend to let them join")
+        label2 = Label(frame1, text="Share with your friend to let them join",
+                       padx=10)
+        label3 = Label(
+                frame1, text="Waiting for your friend to join the game...",
+                padx=15, pady=5)
 
         frame1.grid(row=0, column=0)
-        label1.grid(row=0, column=0)
-        label2.grid(row=1, column=0)
+        label0.grid(row=0, column=0)
+        label1.grid(row=1, column=0)
+        label2.grid(row=2, column=0)
+        label3.grid(row=3, column=0)
+
+        frame2 = Frame(self)
+        btn1 = Button(frame2, text="Cancel game room", 
+                      command=lambda: self.factory.cancel_game_room(
+                          self.game_code)
+                      )
+        
+        frame2.grid(row=1, column=0)
+        btn1.grid(row=0, column=0, pady=10)
 
 if __name__ == '__main__':
     try:
