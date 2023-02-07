@@ -12,11 +12,12 @@ from ipaddress import IPv4Address
 from tools.game_code import game_code
 from models.room import Room
 from game.ttt import eval_game
+from response import Response
 
 logging.basicConfig(
-    filename='ttt-server.log', encoding='utf-8', 
-    format="%(asctime)s [%(levelname)s]: %(message)s", level=logging.DEBUG
-)
+        filename='ttt-server.log', encoding='utf-8', 
+        format="%(asctime)s [%(levelname)s]: %(message)s", level=logging.DEBUG
+        )
 
 class TicTacToeProtocol(basic.LineReceiver):
     def connectionMade(self):
@@ -26,8 +27,8 @@ class TicTacToeProtocol(basic.LineReceiver):
     def connectionLost(self, reason):
         addr = self.transport.getPeer()
         logging.info(
-            f'Connection lost by {addr.host} [{reason.getErrorMessage()}]'
-        )
+                f'Connection lost by {addr.host} [{reason.getErrorMessage()}]'
+                )
     
         gc = self.factory.find_game_code(addr) 
         if gc:
@@ -43,12 +44,12 @@ class TicTacToeProtocol(basic.LineReceiver):
             json_data = json.loads(line)
             self.handle_line(json_data)
         except json.decoder.JSONDecodeError:
-            self.write_response('invalid input')
+            self.write_response(Response.INVALID_INPUT)
         except Exception as e:
             logging.error(
-                f'Unknown error {e} occured while parsing: {line}'
-            )
-            self.write_response('unknown error occured')
+                    f'Unknown error {e} occured while parsing: {line}'
+                    )
+            self.write_response(Response.UNKNOWN_ERROR)
 
     def handle_line(self, json_data):
         action = json_data.get('action', None)
@@ -58,86 +59,85 @@ class TicTacToeProtocol(basic.LineReceiver):
             gc = game_code()
             addr = self.transport.getPeer()
             logging.info(
-                f'New game room created by {addr.host} with game_code: {gc}' 
-            )
+                    f'New game room created by {addr.host} with game_code: {gc}' 
+                    )
             self.factory.game_rooms[gc] = Room(
-                game_code = gc, players = [self.transport]
-            )
+                    game_code = gc, players = [self.transport]
+                    )
             res = {
-                "response": "room created",
-                "game_code": gc,
-            }
+                    "RES": Response.ROOM_CREATED,
+                    "GAME_CODE": gc,
+                    }
             self.sendLine(json.dumps(res).encode('utf-8'))
-            # self.write_response('room created') 
 
         elif action == 'JOIN':
             if not data:
-                self.write_response('invalid data')
+                self.write_response(Response.INVALID_DATA)
                 return
 
             gc = data.get('game_code', None) 
             if not gc:
-                self.write_response('game_code not found')
+                self.write_response(Response.GAME_CODE_NOT_FOUND)
                 return
 
             if not self.factory.valid_game_code(gc):
-                self.write_response('invalid game_code')
+                self.write_response(Response.INVALID_GAME_CODE)
                 return
             
             if len(self.factory.game_rooms[gc].players) < 2:
                 logging.info(f'New player joining game room: {gc}')
                 self.factory.game_rooms[gc].players.append(self.transport)
-                self.write_response('joined room')
+                self.write_response(Response.JOINED_ROOM)
             else:
-                self.write_response('room full')
+                self.write_response(Response.ROOM_FULL)
 
         elif action == 'CANCEL':
             gc = data.get('game_code', None) 
             if not self.factory.valid_game_code(gc):
-                self.write_response('invalid game_code')
+                self.write_response(Response.INVALID_GAME_CODE)
                 return
 
             addr = self.transport.getPeer() 
             if addr not in [player.getPeer() for player in self.factory.game_rooms[gc].players]:
-                self.write_response('not authorized to cancel game room')
+                self.write_response(Response.NOT_AUTHORIZED)
                 return
 
             try:
                 logging.info(f'Player cancelling game room: {gc}')
                 del self.factory.game_rooms[gc]
-                self.write_response('cancelled game room')
+                self.write_response(Response.CANCELLED_ROOM)
                 return
             except Exception as e:
                 logging.error(
                     f'Unknown error occured while trying to cancel game: {e}'
                 )
-                self.write_reponse('unknown error occured') 
+                self.write_reponse(Response.UNKNOWN_ERROR) 
 
         elif action == 'EVAL':
             game_string = data.get('game_string', None)
             gc = data.get('game_code', None)
             if not game_string:
-                self.write_response('game_string not found')
+                self.write_response(Response.GAME_STRING_NOT_FOUND)
                 return
             if not gc:
-                self.write_response('game_code not found')
+                self.write_response(Response.GAME_CODE_NOT_FOUND)
                 return
             if not self.factory.valid_game_code(gc):
-                self.write_response('invalid game_code')
+                self.write_response(Response.INVALID_GAME_CODE)
                 return
 
             logging.info('Player evaluating game string')
             for player in self.factory.game_rooms[gc].players:
-                res = {"response": eval_game(game_string)}
+                res = {"RES": eval_game(game_string)}
                 player.write(json.dumps(res).encode('utf-8') + b'\r\n')
 
         else:
             logging.error(f'Unknown action: {action}')
-            self.write_response('unknown action')
+            self.write_response(Response.UNKNOWN_ACTION)
 
     def write_response(self, msg: str) -> None:
         '''Sends reponse back to other end'''
-        res = {'response': msg}
+        res = {'RES': msg}
         self.sendLine(json.dumps(res).encode('utf-8'))
 
 class TicTacToeFactory(protocol.ServerFactory):

@@ -5,6 +5,7 @@ import sys
 
 sys.path.append('../')
 from ttt_server import TicTacToeFactory
+from response import Response
 
 class TestServer(unittest.TestCase):
     def setUp(self):
@@ -16,7 +17,7 @@ class TestServer(unittest.TestCase):
     def test_invalid_input(self):
         '''Tests if the input is invalid or not'''
         self.protocol.lineReceived(b'test')
-        res = {"response": "invalid input"}
+        res = {"RES": Response.INVALID_INPUT}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_invalid_game_code(self):
@@ -30,7 +31,7 @@ class TestServer(unittest.TestCase):
                 "game_string": "test"
                 }
             }
-        res = {"response": "invalid game_code"}
+        res = {"RES": Response.INVALID_GAME_CODE}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.tr.clear()
@@ -53,7 +54,7 @@ class TestServer(unittest.TestCase):
             }
         }
         self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
-        res = {"response": "game_string not found"}
+        res = {"RES": Response.GAME_STRING_NOT_FOUND}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_cancel_game_room_without_authorization(self):
@@ -67,7 +68,7 @@ class TestServer(unittest.TestCase):
         self.factory.game_rooms[game_code].players = []
         cancel = {"action": "CANCEL", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(cancel).encode('utf-8'))
-        res = {"response": "not authorized to cancel game room"}
+        res = {"RES": Response.NOT_AUTHORIZED}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_join_full_room(self):
@@ -78,12 +79,12 @@ class TestServer(unittest.TestCase):
         self.tr.clear()
         join = {"action": "JOIN", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
-        res = {"response": "joined room"}
+        res = {"RES": Response.JOINED_ROOM}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
         self.tr.clear()
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
-        res = {"response": "room full"}
+        res = {"RES": Response.ROOM_FULL}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_host_game(self):
@@ -101,7 +102,7 @@ class TestServer(unittest.TestCase):
         self.tr.clear()
         join = {"action": "JOIN", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
-        res = {"response": "joined room"}
+        res = {"RES": Response.JOINED_ROOM}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
 
@@ -115,7 +116,7 @@ class TestServer(unittest.TestCase):
         self.assertIn(game_code, self.factory.game_rooms)
         cancel = {"action": "CANCEL", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(cancel).encode('utf-8'))
-        res = {"response": "cancelled game room"}
+        res = {"RES": Response.CANCELLED_ROOM}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertNotIn(game_code, self.factory.game_rooms)
 
@@ -133,7 +134,7 @@ class TestServer(unittest.TestCase):
             }
         }
         self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
-        res = {"response": "o_won"}
+        res = {"RES": "o_won"}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_find_game_code(self):
