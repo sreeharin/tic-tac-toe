@@ -80,7 +80,11 @@ class TestServer(unittest.TestCase):
         join = {"action": "JOIN", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
         res = {"RES": Response.JOINED_ROOM}
-        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
+
+        #Since we're testing, both the players in the array have the same address
+        #Hence we will receive the same message twice
+        dump = dumps(res).encode('utf-8')
+        self.assertEqual(self.tr.value(), dump+b'\r\n'+dump+b'\r\n')
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
         self.tr.clear()
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
@@ -103,7 +107,11 @@ class TestServer(unittest.TestCase):
         join = {"action": "JOIN", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
         res = {"RES": Response.JOINED_ROOM}
-        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
+
+        #Since we're testing, both the players in the player are the same person
+        #Hence we will receive the same message twice
+        dump = dumps(res).encode('utf-8')
+        self.assertEqual(self.tr.value(), dump+b'\r\n'+dump+b'\r\n')
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
 
     def test_cancel_game_room(self):

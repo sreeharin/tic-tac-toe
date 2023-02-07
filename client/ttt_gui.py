@@ -19,14 +19,13 @@ CURRENT_FRAME = None
 
 class TicTacToeClientProtocol(LineReceiver):
     def connectionMade(self):
-        print('Connection Made To Server')
+        print('Connection established with server')
         self.factory.client = self
 
     def connectionLost(self, reason):
         pass
 
     def lineReceived(self, line):
-        print(line)
         line = line.decode('utf-8')
         self.factory.handle_line(line)
 
@@ -37,20 +36,38 @@ class TicTacToeClientFactory(ClientFactory):
         self.client = None
 
     def handle_line(self, line: str) -> None:
+        '''Reads response from line and does appropriate task'''
         json_data = json.loads(line) 
         response = json_data.get('RES')
 
         match response:
             case Response.ROOM_CREATED:
-                print(json_data)
                 game_code = json_data.get('GAME_CODE')
+                print(f'Game room created with code: {game_code}')
                 switch_frame(CURRENT_FRAME, 'WaitingFrame', game_code)
             case Response.CANCELLED_ROOM:
                 print('Room cancelled')
                 switch_frame(CURRENT_FRAME, 'MainFrame')
-            case _:
-                print(response)
-                print('Unknown response')
+            case Response.JOINED_ROOM:
+                print('Joined ROOM')
+            case Response.GAME_CODE_NOT_FOUND:
+                print('Game code not found')
+            case Response.GAME_STRING_NOT_FOUND:
+                print('Game string not found')
+            case Response.INVALID_INPUT:
+                print('Invalid input')
+            case Response.INVALID_DATA:
+                print('Invalid data')
+            case Response.INVALID_GAME_CODE:
+                print('Invalid game code')
+            case Response.ROOM_FULL:
+                print('Room full')
+            case Response.NOT_AUTHORIZED:
+                print('Not authorized')
+            case Response.UNKNOWN_ACTION:
+                print('Unknown action')
+            case Response.UNKNOWN_ERROR:
+                print('Unknown error')
 
     def host_game(self) -> None:
         print('Hosting game')
@@ -60,7 +77,6 @@ class TicTacToeClientFactory(ClientFactory):
                 }
         if self.client != None:
             self.client.sendLine(json.dumps(host_data).encode('utf-8'))
-            print('host game command send')
         else:
             print('Can\'t host game. Not connected to server.')
 
@@ -111,7 +127,6 @@ def switch_frame(current_frame: any, new_frame: str,
         case _:
             print('Unknown frame')
             reactor.stop()
-
     current_frame.destroy()
 
 class MainFrame(Frame):

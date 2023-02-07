@@ -33,8 +33,11 @@ class TicTacToeProtocol(basic.LineReceiver):
         gc = self.factory.find_game_code(addr) 
         if gc:
             try:
-                del self.factory.game_rooms[gc]
-                logging.info(f'Deleted room with game_code: {gc}')
+                if self.factory.game_rooms[gc].players[0] == self.transport:
+                    del self.factory.game_rooms[gc]
+                    logging.info(f'Deleted room with game_code: {gc}')
+                else:
+                    self.factory.game_rooms[gc].players.pop()
             except KeyError:
                 pass
 
@@ -45,11 +48,11 @@ class TicTacToeProtocol(basic.LineReceiver):
             self.handle_line(json_data)
         except json.decoder.JSONDecodeError:
             self.write_response(Response.INVALID_INPUT)
-        except Exception as e:
-            logging.error(
-                    f'Unknown error {e} occured while parsing: {line}'
-                    )
-            self.write_response(Response.UNKNOWN_ERROR)
+        # except Exception as e:
+        #     logging.error(
+        #             f'Unknown error {e} occured while parsing: {line}'
+        #             )
+        #     self.write_response(Response.UNKNOWN_ERROR)
 
     def handle_line(self, json_data):
         action = json_data.get('action', None)
@@ -87,7 +90,10 @@ class TicTacToeProtocol(basic.LineReceiver):
             if len(self.factory.game_rooms[gc].players) < 2:
                 logging.info(f'New player joining game room: {gc}')
                 self.factory.game_rooms[gc].players.append(self.transport)
-                self.write_response(Response.JOINED_ROOM)
+                # self.write_response(Response.JOINED_ROOM)
+                res = {"RES": Response.JOINED_ROOM}
+                for player in self.factory.game_rooms[gc].players:
+                    player.write(json.dumps(res).encode('utf-8') + b'\r\n')
             else:
                 self.write_response(Response.ROOM_FULL)
 
