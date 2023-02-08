@@ -11,7 +11,7 @@ import unittest
 import sys
 
 sys.path.append('../')
-from game.ttt import convert, draw, x_wins, o_wins, eval_game
+from game.ttt import convert, draw, x_wins, o_wins, eval_game, Result
 
 class TestGame(unittest.TestCase):
     def test_convert(self):
@@ -64,7 +64,10 @@ class TestGame(unittest.TestCase):
         o_win_game = 'oxoxoxxoo'
         x_win_game = 'xooxxooox'
         draw_game = 'xoxooxoxo'
+        ongoing_game = 'x--------'
 
-        self.assertEqual(eval_game(o_win_game), 'o_won')
-        self.assertEqual(eval_game(x_win_game), 'x_won')
-        self.assertEqual(eval_game(draw_game), 'draw')
+        self.assertEqual(eval_game(o_win_game), Result.O_WON)
+        self.assertEqual(eval_game(x_win_game), Result.X_WON)
+        self.assertEqual(eval_game(draw_game),  Result.DRAW)
+        self.assertEqual(eval_game(ongoing_game), Result.ONGOING)
+

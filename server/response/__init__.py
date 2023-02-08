@@ -5,6 +5,7 @@ class Response(IntFlag):
     ROOM_CREATED = auto() 
     CANCELLED_ROOM = auto() 
     JOINED_ROOM = auto() 
+    GAME_STRING_EVAL = auto()
     GAME_CODE_NOT_FOUND = auto() 
     GAME_STRING_NOT_FOUND = auto() 
     INVALID_INPUT = auto()

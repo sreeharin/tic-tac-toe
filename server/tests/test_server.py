@@ -130,7 +130,13 @@ class TestServer(unittest.TestCase):
             }
         }
         self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
-        res = {"RES": "o_won"}
+        res = {
+                "RES": Response.GAME_STRING_EVAL, 
+                "DATA": {
+                    "GAME_STRING": "oxoxo-oxx",
+                    "EVAL": "o_won",
+                    }
+                }
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_find_game_code(self):

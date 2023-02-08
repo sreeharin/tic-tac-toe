@@ -152,7 +152,14 @@ class TicTacToeProtocol(basic.LineReceiver):
 
             logging.info('Player evaluating game string')
             for player in self.factory.game_rooms[gc].players:
-                res = {"RES": eval_game(game_string)}
+                # res = {"RES": eval_game(game_string)}
+                res = {
+                        "RES": Response.GAME_STRING_EVAL, 
+                        "DATA": {
+                            "GAME_STRING": game_string,
+                            "EVAL": eval_game(game_string)
+                            }
+                        }
                 player.write(json.dumps(res).encode('utf-8') + b'\r\n')
 
         else:

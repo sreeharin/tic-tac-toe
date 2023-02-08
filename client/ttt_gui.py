@@ -55,7 +55,11 @@ class TicTacToeClientFactory(ClientFactory):
             case Response.JOINED_ROOM:
                 print('Joined ROOM')
                 data = json_data.get('DATA')
-                print(f"Mark => {data['MARK']}")
+                self.mark = data['MARK']
+                print(f'You\'re playing as {self.mark}')
+                switch_frame(CURRENT_FRAME, 'GameFrame')
+            case Response.GAME_STRING_EVAL:
+                print('Game string evaluation')
             case Response.GAME_CODE_NOT_FOUND:
                 print('Game code not found')
             case Response.GAME_STRING_NOT_FOUND:
@@ -113,6 +117,7 @@ class TicTacToeClientFactory(ClientFactory):
             print('Can\'t cancel game room. Not connected to server')
 
     def eval_btn_click(self, btn_no: int) -> None:
+        # global BTNS_STATE
         print(f"Clicked btn: {btn_no}")
         if BTNS_STATE[btn_no].get() == "":
             BTNS_STATE[btn_no].set(self.mark)
@@ -138,6 +143,10 @@ def switch_frame(current_frame: any, new_frame: str,
         case 'WaitingFrame':
             tmpFrame = WaitingFrame(current_frame.master,
                                     current_frame.factory, game_code)
+            tmpFrame.pack()
+            CURRENT_FRAME = tmpFrame
+        case 'GameFrame':
+            tmpFrame = GameFrame(current_frame.master, current_frame.factory)
             tmpFrame.pack()
             CURRENT_FRAME = tmpFrame
         case _:
@@ -268,12 +277,13 @@ class GameFrame(Frame):
         self.__create_widgets()
 
     def __create_widgets(self):
-        global BTNS_STATE
         frame1 = Frame(self)
-        label1 = Label(frame1, text="You're playing with your friend")
+        label1 = Label(frame1, text="Tic Tac Toe Multiplayer")
+        label2 = Label(frame1, text=f"You're playing as {self.factory.mark}")
 
         frame1.grid(row=0, column=0)
         label1.grid(row=0, column=0, padx=10, pady=5)
+        label2.grid(row=1, column=0, pady=5)
 
         frame2 = Frame(self, bg="black")
         frame2.grid(row=1, column=0, pady=10)
