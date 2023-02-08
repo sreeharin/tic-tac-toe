@@ -60,7 +60,26 @@ class TicTacToeClientFactory(ClientFactory):
                 data = json_data.get('DATA')
                 game_string = data['GAME_STRING']
                 game_eval = data['EVAL']
+
                 print(game_eval)
+
+                match game_eval:
+                    case 'x_won':
+                        if self.mark == "X":
+                            result = "You won!"
+                        else:
+                            result = "Your opponent won the game."
+                        switch_frame(CURRENT_FRAME, 'ResultFrame', 
+                                     result=result)
+                    case 'o_won':
+                        if self.mark == "O":
+                            result = "You won!"
+                        else:
+                            result = "Your opponent won the game."
+                        switch_frame(CURRENT_FRAME, 'ResultFrame', 
+                                     result=result)
+                    case _:
+                        pass
 
                 for idx, mark in enumerate(game_string):
                     if mark != '-':
@@ -132,7 +151,6 @@ class TicTacToeClientFactory(ClientFactory):
             game_string = ''.join(
                     btn.get() if btn.get() != ""
                     else "-" for btn in BTNS_STATE)
-            print(game_string)
             eval_data = {
                     "action": "EVAL",
                     "data": {
@@ -148,7 +166,7 @@ class TicTacToeClientFactory(ClientFactory):
 
 
 def switch_frame(current_frame: any, new_frame: str,
-                 game_code: str = None) -> None:
+                 game_code: str = None, result: str = None) -> None:
     '''Switches between frames'''
     global CURRENT_FRAME
     match new_frame:
@@ -167,6 +185,11 @@ def switch_frame(current_frame: any, new_frame: str,
             CURRENT_FRAME = tmpFrame
         case 'GameFrame':
             tmpFrame = GameFrame(current_frame.master, current_frame.factory)
+            tmpFrame.pack()
+            CURRENT_FRAME = tmpFrame
+        case 'ResultFrame':
+            tmpFrame = ResultFrame(current_frame.master, 
+                                   current_frame.factory, result)
             tmpFrame.pack()
             CURRENT_FRAME = tmpFrame
         case _:
@@ -328,6 +351,25 @@ class GameFrame(Frame):
             btn.grid(row=row, column=col, padx=1, pady=1)
             col += 1
 
+
+class ResultFrame(Frame):
+    def __init__(self, master, factory, result):
+        self.master = master
+        self.factory = factory
+        self.result = result
+        super().__init__(self.master)
+        self.pack()
+        self.__create_widgets()
+
+    def __create_widgets(self):
+        frame1 = Frame(self)
+        label1 = Label(self, text=self.result, font=(24))
+        btn1 = Button(self, text="Go to main menu", 
+                      command=lambda: switch_frame(self, 'MainFrame'))
+        
+        frame1.grid(row=0, column=0)
+        label1.grid(row=0, column=0, padx=5, pady=5)
+        btn1.grid(row=1, column=0, padx=5, pady=10)
 
 if __name__ == '__main__':
     try:
