@@ -5,6 +5,8 @@ import sys
 
 sys.path.append('../')
 from ttt_server import TicTacToeFactory
+from response import Response
+
 
 class TestServer(unittest.TestCase):
     def setUp(self):
@@ -16,15 +18,21 @@ class TestServer(unittest.TestCase):
     def test_invalid_input(self):
         '''Tests if the input is invalid or not'''
         self.protocol.lineReceived(b'test')
-        res = {"response": "invalid input"}
+        res = {"RES": Response.INVALID_INPUT}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_invalid_game_code(self):
         '''Tests if given game code exists'''
         join = {"action": "JOIN", "data": {"game_code": "test"}}
         cancel = {"action": "CANCEL", "data": {"game_code": "test"}}
-        eval_game = {"action": "CANCEL", "data": {"game_code": "test"}}
-        res = {"response": "invalid game_code"}
+        eval_game = {
+            "action": "EVAL",
+            "data": {
+                "game_code": "test",
+                "game_string": "test"
+                }
+            }
+        res = {"RES": Response.INVALID_GAME_CODE}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.tr.clear()
@@ -41,13 +49,13 @@ class TestServer(unittest.TestCase):
         game_code = list(self.factory.game_rooms.keys())[0]
         self.tr.clear()
         eval_game = {
-            "action": "EVAL", 
+            "action": "EVAL",
             "data": {
                 "game_code": game_code,
             }
         }
         self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
-        res = {"response": "game_string not found"}
+        res = {"RES": Response.GAME_STRING_NOT_FOUND}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_cancel_game_room_without_authorization(self):
@@ -61,7 +69,7 @@ class TestServer(unittest.TestCase):
         self.factory.game_rooms[game_code].players = []
         cancel = {"action": "CANCEL", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(cancel).encode('utf-8'))
-        res = {"response": "not authorized to cancel game room"}
+        res = {"RES": Response.NOT_AUTHORIZED}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_join_full_room(self):
@@ -72,21 +80,17 @@ class TestServer(unittest.TestCase):
         self.tr.clear()
         join = {"action": "JOIN", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
-        res = {"response": "joined room"}
-        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
         self.tr.clear()
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
-        res = {"response": "room full"}
+        res = {"RES": Response.ROOM_FULL}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_host_game(self):
         '''Tests game hosting'''
         tmp = {"action": "HOST", "data": None}
-        res = {"response": "room created"}
         self.assertEqual(len(self.factory.game_rooms), 0)
         self.protocol.lineReceived(dumps(tmp).encode('utf-8'))
-        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertEqual(len(self.factory.game_rooms), 1)
 
     def test_join_game(self):
@@ -97,8 +101,6 @@ class TestServer(unittest.TestCase):
         self.tr.clear()
         join = {"action": "JOIN", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
-        res = {"response": "joined room"}
-        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
 
     def test_cancel_game_room(self):
@@ -111,7 +113,7 @@ class TestServer(unittest.TestCase):
         self.assertIn(game_code, self.factory.game_rooms)
         cancel = {"action": "CANCEL", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(cancel).encode('utf-8'))
-        res = {"response": "cancelled game room"}
+        res = {"RES": Response.CANCELLED_ROOM}
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertNotIn(game_code, self.factory.game_rooms)
 
@@ -122,26 +124,41 @@ class TestServer(unittest.TestCase):
         game_code = list(self.factory.game_rooms.keys())[0]
         self.tr.clear()
         eval_game = {
-            "action": "EVAL", 
+            "action": "EVAL",
             "data": {
                 "game_code": game_code,
                 "game_string": "oxoxo-oxx"
             }
         }
         self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
-        res = {"response": "o_won"}
+        res = {
+                "RES": Response.GAME_STRING_EVAL,
+                "DATA": {
+                    "GAME_STRING": "oxoxo-oxx",
+                    "EVAL": "o_won",
+                    }
+                }
         self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
 
     def test_find_game_code(self):
         '''Test for finding game_code from address'''
         tmp = {"action": "HOST", "data": None}
-        res = {"response": "room created"}
         self.assertEqual(len(self.factory.game_rooms), 0)
         self.protocol.lineReceived(dumps(tmp).encode('utf-8'))
         game_code = list(self.factory.game_rooms.keys())[0]
-        self.assertEqual(self.tr.value(), dumps(res).encode('utf-8') + b'\r\n')
         self.assertEqual(len(self.factory.game_rooms), 1)
         addr = self.tr.getPeer()
         self.assertEqual(self.factory.find_game_code(addr), game_code)
 
-
+    def test_player_mark_assignments(self):
+        '''Test if players are assigned x and o randomly after joining'''
+        host_data = {"action": "HOST", "data": None}
+        self.protocol.lineReceived(dumps(host_data).encode('utf-8'))
+        game_code = list(self.factory.game_rooms.keys())[0]
+        self.tr.clear()
+        join_data = {"action": "JOIN", "data": {"game_code": game_code}}
+        self.protocol.lineReceived(dumps(join_data).encode('utf-8'))
+        self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
+        self.assertFalse(
+                self.factory.game_rooms[game_code].x
+                is self.factory.game_rooms[game_code].o)

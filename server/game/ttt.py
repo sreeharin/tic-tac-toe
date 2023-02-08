@@ -1,11 +1,5 @@
-#!/usr/bin/env python
-
-'''
-Author: shn
-License: MIT License
-'''
-
 from enum import StrEnum, auto
+
 
 class Result(StrEnum):
     DRAW = auto()
@@ -13,8 +7,10 @@ class Result(StrEnum):
     O_WON = auto()
     ONGOING = auto()
 
+
 def convert(game_string: str) -> dict:
     '''Convert game string into game map'''
+    game_string = game_string.lower()
     game_map = {
         'h': [
             game_string[:3],
@@ -33,13 +29,15 @@ def convert(game_string: str) -> dict:
     }
     return game_map
 
+
 def draw(game_string: str) -> bool:
     '''Check if game is draw'''
-    if (not x_wins(game_string) and \
-        not o_wins(game_string) and \
-        '-' not in game_string):
+    if (not x_wins(game_string)
+            and not o_wins(game_string)
+            and '-' not in game_string):
         return True
     return False
+
 
 def x_wins(game_string: str) -> bool:
     '''Check if x won the game'''
@@ -48,12 +46,14 @@ def x_wins(game_string: str) -> bool:
         return True
     return False
 
+
 def o_wins(game_string: str) -> bool:
     '''Check if o won the game'''
     game_map = convert(game_string)
     if 3*'o' in game_map['h']+game_map['v']+game_map['d']:
         return True
     return False
+
 
 def eval_game(game_string: str) -> Result:
     '''Evaluates the status of the game'''

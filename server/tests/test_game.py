@@ -1,24 +1,15 @@
-#!/usr/bin/env python
-
-'''
-Tests for game package
-
-Author: shn
-License: MIT License
-'''
-
 import unittest
 import sys
 
 sys.path.append('../')
-from game.ttt import convert, draw, x_wins, o_wins, eval_game
+from game.ttt import convert, draw, x_wins, o_wins, eval_game, Result
+
 
 class TestGame(unittest.TestCase):
     def test_convert(self):
         '''Test if game string is converted to game map'''
         test_string = '012345678'
         game_map = convert(test_string)
-        
         self.assertEqual(game_map['h'], ['012', '345', '678'])
         self.assertEqual(game_map['v'], ['036', '147', '258'])
         self.assertEqual(game_map['d'], ['048', '246'])
@@ -29,7 +20,6 @@ class TestGame(unittest.TestCase):
         draw_game2 = 'xoooxxxoo'
         draw_game3 = 'xoooxxoxo'
         win_game1 = 'ooxoxxxoo'
-    
         self.assertTrue(draw(draw_game1))
         self.assertTrue(draw(draw_game2))
         self.assertTrue(draw(draw_game3))
@@ -37,7 +27,7 @@ class TestGame(unittest.TestCase):
 
     def test_x_wins(self):
         '''Test if x won the game'''
-        x_win_game1 = 'xooxxooox'
+        x_win_game1 = 'XooXXoooX'
         x_win_game2 = 'x--x--x--'
         x_win_game3 = 'oxoxxx-oo'
         x_lose_game1 = 'oxxoxooox'
@@ -64,7 +54,9 @@ class TestGame(unittest.TestCase):
         o_win_game = 'oxoxoxxoo'
         x_win_game = 'xooxxooox'
         draw_game = 'xoxooxoxo'
+        ongoing_game = 'x--------'
 
-        self.assertEqual(eval_game(o_win_game), 'o_won')
-        self.assertEqual(eval_game(x_win_game), 'x_won')
-        self.assertEqual(eval_game(draw_game), 'draw')
+        self.assertEqual(eval_game(o_win_game), Result.O_WON)
+        self.assertEqual(eval_game(x_win_game), Result.X_WON)
+        self.assertEqual(eval_game(draw_game),  Result.DRAW)
+        self.assertEqual(eval_game(ongoing_game), Result.ONGOING)
