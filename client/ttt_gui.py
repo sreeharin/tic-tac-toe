@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-'''
-Author: shn
-License: MIT License
-'''
-
 import sys
 import json
 from tkinter import Tk, Frame, Label, Button, Entry, StringVar
@@ -37,11 +32,11 @@ class TicTacToeClientFactory(ClientFactory):
     def __init__(self):
         self.client = None
         self.game_code = None
-        self.turn = None
+        # self.turn = None
         self.mark = None
 
     def handle_line(self, line: str) -> None:
-        '''Reads response from line and does appropriate task'''
+        '''Reads response from line and does the appropriate task'''
         json_data = json.loads(line)
         response = json_data.get('RES')
 
@@ -70,7 +65,6 @@ class TicTacToeClientFactory(ClientFactory):
                 for idx, mark in enumerate(game_string):
                     if mark != '-':
                         BTNS_STATE[idx].set(value=mark)
-
             case Response.GAME_CODE_NOT_FOUND:
                 print('Game code not found')
             case Response.GAME_STRING_NOT_FOUND:
@@ -129,10 +123,14 @@ class TicTacToeClientFactory(ClientFactory):
             print('Can\'t cancel game room. Not connected to server.')
 
     def eval_btn_click(self, btn_no: int) -> None:
+        '''
+        When the client presses a button on the GameFrame, the game string
+        is collected and sent to the server for evaluation.
+        '''
         if BTNS_STATE[btn_no].get() == "":
             BTNS_STATE[btn_no].set(self.mark)
             game_string = ''.join(
-                    btn.get() if btn.get() != "" 
+                    btn.get() if btn.get() != ""
                     else "-" for btn in BTNS_STATE)
             print(game_string)
             eval_data = {
@@ -257,6 +255,10 @@ class JoinFrame(Frame):
 
 
 class WaitingFrame(Frame):
+    '''
+    The player is shown this frame when they're waiting for opponent
+    to join them.
+    '''
     def __init__(self, master, factory, game_code):
         self.master = master
         self.factory = factory
@@ -291,6 +293,7 @@ class WaitingFrame(Frame):
 
 
 class GameFrame(Frame):
+    '''Shows the tic tac toe board with clickable buttons'''
     def __init__(self, master, factory):
         self.master = master
         self.factory = factory

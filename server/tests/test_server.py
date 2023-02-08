@@ -7,6 +7,7 @@ sys.path.append('../')
 from ttt_server import TicTacToeFactory
 from response import Response
 
+
 class TestServer(unittest.TestCase):
     def setUp(self):
         self.factory = TicTacToeFactory()
@@ -25,7 +26,7 @@ class TestServer(unittest.TestCase):
         join = {"action": "JOIN", "data": {"game_code": "test"}}
         cancel = {"action": "CANCEL", "data": {"game_code": "test"}}
         eval_game = {
-            "action": "EVAL", 
+            "action": "EVAL",
             "data": {
                 "game_code": "test",
                 "game_string": "test"
@@ -48,7 +49,7 @@ class TestServer(unittest.TestCase):
         game_code = list(self.factory.game_rooms.keys())[0]
         self.tr.clear()
         eval_game = {
-            "action": "EVAL", 
+            "action": "EVAL",
             "data": {
                 "game_code": game_code,
             }
@@ -123,7 +124,7 @@ class TestServer(unittest.TestCase):
         game_code = list(self.factory.game_rooms.keys())[0]
         self.tr.clear()
         eval_game = {
-            "action": "EVAL", 
+            "action": "EVAL",
             "data": {
                 "game_code": game_code,
                 "game_string": "oxoxo-oxx"
@@ -131,7 +132,7 @@ class TestServer(unittest.TestCase):
         }
         self.protocol.lineReceived(dumps(eval_game).encode('utf-8'))
         res = {
-                "RES": Response.GAME_STRING_EVAL, 
+                "RES": Response.GAME_STRING_EVAL,
                 "DATA": {
                     "GAME_STRING": "oxoxo-oxx",
                     "EVAL": "o_won",
@@ -151,7 +152,7 @@ class TestServer(unittest.TestCase):
 
     def test_player_mark_assignments(self):
         '''Test if players are assigned x and o randomly after joining'''
-        host_data = {"action": "HOST", "data": None}   
+        host_data = {"action": "HOST", "data": None}
         self.protocol.lineReceived(dumps(host_data).encode('utf-8'))
         game_code = list(self.factory.game_rooms.keys())[0]
         self.tr.clear()
@@ -159,6 +160,5 @@ class TestServer(unittest.TestCase):
         self.protocol.lineReceived(dumps(join_data).encode('utf-8'))
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
         self.assertFalse(
-                self.factory.game_rooms[game_code].x 
+                self.factory.game_rooms[game_code].x
                 is self.factory.game_rooms[game_code].o)
-
