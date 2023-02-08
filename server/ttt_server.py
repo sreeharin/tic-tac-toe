@@ -5,6 +5,7 @@ License: MIT License
 
 import logging
 import json
+from random import randint
 from twisted.internet import protocol, reactor, endpoints
 from twisted.protocols import basic
 from twisted.application import service
@@ -90,10 +91,27 @@ class TicTacToeProtocol(basic.LineReceiver):
             if len(self.factory.game_rooms[gc].players) < 2:
                 logging.info(f'New player joining game room: {gc}')
                 self.factory.game_rooms[gc].players.append(self.transport)
-                # self.write_response(Response.JOINED_ROOM)
-                res = {"RES": Response.JOINED_ROOM}
-                for player in self.factory.game_rooms[gc].players:
+
+                #Randomly assigning X & O to players
+                x = randint(0, 1)
+                o = 1-x
+                
+                self.factory.game_rooms[gc].x = x 
+                self.factory.game_rooms[gc].o = o
+
+                def find_mark(idx, x):
+                    return "X" if idx == x else "O"
+
+                for idx, player in enumerate(
+                        self.factory.game_rooms[gc].players):
+                    res = {
+                            "RES": Response.JOINED_ROOM,
+                            "DATA": {
+                                "MARK": find_mark(idx, x) 
+                                } 
+                            }
                     player.write(json.dumps(res).encode('utf-8') + b'\r\n')
+
             else:
                 self.write_response(Response.ROOM_FULL)
 

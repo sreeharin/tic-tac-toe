@@ -26,9 +26,6 @@ class TicTacToeClientProtocol(LineReceiver):
         print('Connection established with server')
         self.factory.client = self
 
-    def connectionLost(self, reason):
-        pass
-
     def lineReceived(self, line):
         line = line.decode('utf-8')
         self.factory.handle_line(line)
@@ -39,6 +36,8 @@ class TicTacToeClientFactory(ClientFactory):
 
     def __init__(self):
         self.client = None
+        self.turn = None
+        self.mark = None
 
     def handle_line(self, line: str) -> None:
         '''Reads response from line and does appropriate task'''
@@ -55,6 +54,8 @@ class TicTacToeClientFactory(ClientFactory):
                 switch_frame(CURRENT_FRAME, 'MainFrame')
             case Response.JOINED_ROOM:
                 print('Joined ROOM')
+                data = json_data.get('DATA')
+                print(f"Mark => {data['MARK']}")
             case Response.GAME_CODE_NOT_FOUND:
                 print('Game code not found')
             case Response.GAME_STRING_NOT_FOUND:
@@ -114,10 +115,10 @@ class TicTacToeClientFactory(ClientFactory):
     def eval_btn_click(self, btn_no: int) -> None:
         print(f"Clicked btn: {btn_no}")
         if BTNS_STATE[btn_no].get() == "":
-            BTNS_STATE[btn_no].set("X")
+            BTNS_STATE[btn_no].set(self.mark)
             game_string = ''.join(
-                    btn.get()
-                    if btn.get() != "" else "-" for btn in BTNS_STATE)
+                    btn.get() if btn.get() != "" 
+                    else "-" for btn in BTNS_STATE)
             print(game_string)
 
 
@@ -309,8 +310,7 @@ if __name__ == '__main__':
     root.protocol("WM_DELETE_WINDOW", lambda: reactor.stop())
 
     tksupport.install(root)
-    # CURRENT_FRAME = MainFrame(root, factory)
+    CURRENT_FRAME = MainFrame(root, factory)
     BTNS_STATE = [StringVar() for _ in range(9)]
-    CURRENT_FRAME = GameFrame(root, factory)
     reactor.connectTCP(host, port, factory)
     reactor.run()

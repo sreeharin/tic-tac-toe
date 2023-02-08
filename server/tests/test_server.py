@@ -79,12 +79,6 @@ class TestServer(unittest.TestCase):
         self.tr.clear()
         join = {"action": "JOIN", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
-        res = {"RES": Response.JOINED_ROOM}
-
-        #Since we're testing, both the players in the array have the same address
-        #Hence we will receive the same message twice
-        dump = dumps(res).encode('utf-8')
-        self.assertEqual(self.tr.value(), dump+b'\r\n'+dump+b'\r\n')
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
         self.tr.clear()
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
@@ -106,12 +100,6 @@ class TestServer(unittest.TestCase):
         self.tr.clear()
         join = {"action": "JOIN", "data": {"game_code": game_code}}
         self.protocol.lineReceived(dumps(join).encode('utf-8'))
-        res = {"RES": Response.JOINED_ROOM}
-
-        #Since we're testing, both the players in the player are the same person
-        #Hence we will receive the same message twice
-        dump = dumps(res).encode('utf-8')
-        self.assertEqual(self.tr.value(), dump+b'\r\n'+dump+b'\r\n')
         self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
 
     def test_cancel_game_room(self):
@@ -155,4 +143,16 @@ class TestServer(unittest.TestCase):
         addr = self.tr.getPeer()
         self.assertEqual(self.factory.find_game_code(addr), game_code)
 
+    def test_player_mark_assignments(self):
+        '''Test if players are assigned x and o randomly after joining'''
+        host_data = {"action": "HOST", "data": None}   
+        self.protocol.lineReceived(dumps(host_data).encode('utf-8'))
+        game_code = list(self.factory.game_rooms.keys())[0]
+        self.tr.clear()
+        join_data = {"action": "JOIN", "data": {"game_code": game_code}}
+        self.protocol.lineReceived(dumps(join_data).encode('utf-8'))
+        self.assertEqual(len(self.factory.game_rooms[game_code].players), 2)
+        self.assertFalse(
+                self.factory.game_rooms[game_code].x 
+                is self.factory.game_rooms[game_code].o)
 
