@@ -36,6 +36,7 @@ class TicTacToeClientFactory(ClientFactory):
 
     def __init__(self):
         self.client = None
+        self.game_code = None
         self.turn = None
         self.mark = None
 
@@ -48,6 +49,7 @@ class TicTacToeClientFactory(ClientFactory):
             case Response.ROOM_CREATED:
                 game_code = json_data.get('GAME_CODE')
                 print(f'Game room created with code: {game_code}')
+                self.game_code = game_code
                 switch_frame(CURRENT_FRAME, 'WaitingFrame', game_code)
             case Response.CANCELLED_ROOM:
                 print('Room cancelled')
@@ -60,6 +62,15 @@ class TicTacToeClientFactory(ClientFactory):
                 switch_frame(CURRENT_FRAME, 'GameFrame')
             case Response.GAME_STRING_EVAL:
                 print('Game string evaluation')
+                data = json_data.get('DATA')
+                game_string = data['GAME_STRING']
+                game_eval = data['EVAL']
+                print(game_eval)
+
+                for idx, mark in enumerate(game_string):
+                    if mark != '-':
+                        BTNS_STATE[idx].set(value=mark)
+
             case Response.GAME_CODE_NOT_FOUND:
                 print('Game code not found')
             case Response.GAME_STRING_NOT_FOUND:
@@ -100,6 +111,7 @@ class TicTacToeClientFactory(ClientFactory):
                 }
         if self.client is not None:
             self.client.sendLine(json.dumps(join_data).encode('utf-8'))
+            self.game_code = game_code
         else:
             print('Can\'t join game room. Not connected to server.')
 
@@ -114,17 +126,27 @@ class TicTacToeClientFactory(ClientFactory):
         if self.client is not None:
             self.client.sendLine(json.dumps(cancel_data).encode('utf-8'))
         else:
-            print('Can\'t cancel game room. Not connected to server')
+            print('Can\'t cancel game room. Not connected to server.')
 
     def eval_btn_click(self, btn_no: int) -> None:
-        # global BTNS_STATE
-        print(f"Clicked btn: {btn_no}")
         if BTNS_STATE[btn_no].get() == "":
             BTNS_STATE[btn_no].set(self.mark)
             game_string = ''.join(
                     btn.get() if btn.get() != "" 
                     else "-" for btn in BTNS_STATE)
             print(game_string)
+            eval_data = {
+                    "action": "EVAL",
+                    "data": {
+                            "game_code": self.game_code,
+                            "game_string": game_string,
+                        }
+                    }
+            if self.client is not None:
+                print('Evaluating game string')
+                self.client.sendLine(json.dumps(eval_data).encode('utf-8'))
+            else:
+                print('Can\'t evaluate game_string. Not connected to server.')
 
 
 def switch_frame(current_frame: any, new_frame: str,

@@ -15,6 +15,7 @@ class Result(StrEnum):
 
 def convert(game_string: str) -> dict:
     '''Convert game string into game map'''
+    game_string = game_string.lower()
     game_map = {
         'h': [
             game_string[:3],

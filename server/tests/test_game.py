@@ -37,7 +37,7 @@ class TestGame(unittest.TestCase):
 
     def test_x_wins(self):
         '''Test if x won the game'''
-        x_win_game1 = 'xooxxooox'
+        x_win_game1 = 'XooXXoooX'
         x_win_game2 = 'x--x--x--'
         x_win_game3 = 'oxoxxx-oo'
         x_lose_game1 = 'oxxoxooox'
