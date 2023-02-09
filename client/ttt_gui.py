@@ -61,8 +61,6 @@ class TicTacToeClientFactory(ClientFactory):
                 game_string = data['GAME_STRING']
                 game_eval = data['EVAL']
 
-                print(game_eval)
-
                 match game_eval:
                     case 'x_won':
                         if self.mark == "X":
